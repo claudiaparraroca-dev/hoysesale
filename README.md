@@ -2,7 +2,7 @@
 
 ¿Dónde se sale hoy? Eliges tu zona y ves en qué discotecas y bares va a estar la gente esta noche, quedas con tus grupos y lías la noche con retos de fotos.
 
-En producción: **https://hoysesale.netlify.app**
+En producción: **https://hoy-se-sale.netlify.app**
 
 ## Qué hace
 
