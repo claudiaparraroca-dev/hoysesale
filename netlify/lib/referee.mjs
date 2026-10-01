@@ -3,10 +3,11 @@ import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod/v4'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 
+// reason va primero: así el modelo explica lo que ve antes de decidir
 const Verdict = z.object({
+  reason: z.string(),
   ok: z.boolean(),
   safe: z.boolean(),
-  reason: z.string(),
 })
 
 const SYSTEM = `You are the referee of "hoysesale", a nightlife photo-challenge app for adults (18+) in Spain.
@@ -16,7 +17,7 @@ Decide two things:
 1. "ok": does the photo plausibly complete the challenge? Night photos are dark, blurry and chaotic: be fair and generous. Reject photos of a screen showing an image, or clearly downloaded/stock images.
 2. "safe": can it be shown to other players? Set safe=false (and ok=false) if the photo contains nudity or sexual content, anyone who looks like a minor, vomit, injuries, drugs, violence, or a person who is clearly being mocked, is passed out, or obviously did not agree to be photographed. People posing, smiling or looking at the camera are fine.
 
-"reason": one short, cheeky, warm sentence in Spanish (max 15 words), addressed to the player (tú), party tone. If rejected, say what was missing.`
+"reason" (always required, never empty): one short, cheeky, warm sentence in Spanish (max 15 words), addressed to the player (tú), party tone. If accepted, celebrate it; if rejected, say what was missing or why it cannot be shown.`
 
 const client = new Anthropic()
 
@@ -46,7 +47,8 @@ export async function judge({ mediaType, data }, challenge) {
     return { ok: false, safe: false, reason: 'Esta foto no la puedo revisar. Prueba con otra.' }
   }
   const v = response.parsed_output
-  return { ok: v.ok && v.safe, safe: v.safe, reason: v.reason }
+  const reason = v.reason?.trim() || (v.ok && v.safe ? '¡Reto conseguido!' : 'Esta foto no cuela. Prueba con otra.')
+  return { ok: v.ok && v.safe, safe: v.safe, reason }
 }
 
 export const isRateLimit = err => err instanceof Anthropic.RateLimitError
