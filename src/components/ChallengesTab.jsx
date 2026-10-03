@@ -33,7 +33,7 @@ export default function ChallengesTab({ city, me, night, onToast }) {
                   <span className="ch-emoji">{c.emoji}</span>
                   <span className="ch-body">
                     <span className="ch-text">{c.text}</span>
-                    {c.local && <span className="ch-tag">🔥 Propuesto por @{c.by}</span>}
+                    {c.local && <span className="ch-tag">Propuesto por @{c.by}</span>}
                   </span>
                   <span className="ch-pts">{done ? <Check size={18} /> : `+${c.pts}`}</span>
                 </button>
@@ -81,7 +81,7 @@ function CaptureFlow({ city, challenge, me, night, onClose, onDone, onToast }) {
   const toggle = id => setGroups(g => (g.includes(id) ? g.filter(x => x !== id) : [...g, id]))
 
   return (
-    <Sheet title={`${challenge.emoji} ${challenge.text}`} onClose={onClose} busy={state.step === 'checking'}>
+    <Sheet title={challenge.text} onClose={onClose} busy={state.step === 'checking'}>
       {state.image && (
         <div className={`photo ${state.step}`}>
           <img src={state.image} alt="" />
@@ -99,7 +99,7 @@ function CaptureFlow({ city, challenge, me, night, onClose, onDone, onToast }) {
           {me.groups.map(g => (
             <label key={g.id} className="check">
               <input type="checkbox" checked={groups.includes(g.id)} onChange={() => toggle(g.id)} />
-              <span>{g.emoji} {g.name} <span className="muted">(privado)</span></span>
+              <span>{g.name} <span className="muted">· grupo privado</span></span>
             </label>
           ))}
           {venueWall && <p className="small warn">En el muro público sale tu @ con la foto, aunque vayas en modo amigos o anónimo.</p>}
@@ -128,7 +128,6 @@ function CaptureFlow({ city, challenge, me, night, onClose, onDone, onToast }) {
 function Proposals({ city, onToast }) {
   const [items, setItems] = useState(null)
   const [text, setText] = useState('')
-  const [emoji, setEmoji] = useState('🔥')
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => api(`/api/proposals?city=${city}`).then(r => setItems(r.items)).catch(() => setItems([])), [city])
@@ -137,7 +136,7 @@ function Proposals({ city, onToast }) {
   async function submit(e) {
     e.preventDefault()
     setBusy(true)
-    try { await api('/api/proposals', { method: 'POST', body: { city, text, emoji } }); setText(''); load(); onToast('¡Reto propuesto! Que lo vote la peña.') }
+    try { await api('/api/proposals', { method: 'POST', body: { city, text } }); setText(''); load(); onToast('Reto propuesto. Ahora que lo vote la gente.') }
     catch (err) { onToast(errorText(err)) }
     setBusy(false)
   }
@@ -151,7 +150,6 @@ function Proposals({ city, onToast }) {
     <div className="proposals">
       <p className="small">Propón retos que solo pillen en {CITIES[city].name}. El más votado (mínimo 3 votos) entra en los retos de la noche siguiente y vale +25.</p>
       <form className="propose" onSubmit={submit}>
-        <input className="emoji-in" value={emoji} maxLength={4} onChange={e => setEmoji(e.target.value)} aria-label="Emoji" />
         <input value={text} maxLength={90} placeholder="Foto con el del kebab de la plaza…" onChange={e => setText(e.target.value)} />
         <button className="send" disabled={busy || text.trim().length < 8} aria-label="Proponer"><Plus size={18} /></button>
       </form>

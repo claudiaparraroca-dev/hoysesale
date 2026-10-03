@@ -9,7 +9,7 @@
 import { CITIES, HOME } from '../../src/lib/cities.js'
 import { nightKey, nightLabel } from '../../src/lib/night.js'
 import { auth, body, json } from '../lib/http.mjs'
-import { update } from '../lib/db.mjs'
+import { read, update } from '../lib/db.mjs'
 import { goingDoc, validCity, cards } from '../lib/game.mjs'
 
 const NAMES_PER_VENUE = 30
@@ -42,6 +42,8 @@ async function night(user, url) {
     else if (g.vis === 'public' && g.pub && v.public.length < NAMES_PER_VENUE) { v.public.push(uid); visibleIds.push(uid) }
   }
   const people = await cards(visibleIds)
+  const photos = !!process.env.GOOGLE_MAPS_API_KEY
+  const credits = photos ? (await read(`vplace/${city}`)) || {} : {}
   const list = [...CITIES[city].venues, HOME].map(venue => {
     const v = venues[venue.id] || { count: 0, friends: [], public: [] }
     return {
@@ -49,11 +51,12 @@ async function night(user, url) {
       count: v.count,
       friends: v.friends.map(id => people[id]).filter(Boolean),
       public: v.public.map(id => people[id]).filter(Boolean),
+      photoBy: credits[venue.id]?.by || null,
     }
   })
   const mine = doc.u[user.id] || null
   return json({
-    city, night, label: nightLabel(night),
+    city, night, label: nightLabel(night), photos,
     total: Object.values(doc.u).filter(g => g.v !== HOME.id).length,
     venues: list,
     mine: mine && { venue: mine.v, vis: mine.vis },

@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
-import { Spinner } from './ui'
-
-const MEDAL = { 1: '🥇', 2: '🥈', 3: '🥉' }
+import { Spinner, Avatar } from './ui'
 
 export default function Ranking({ city, scope = 'city', refreshKey, emptyText = 'Nadie ha puntuado aún esta noche.' }) {
   const [rows, setRows] = useState(null)
@@ -20,8 +18,8 @@ export default function Ranking({ city, scope = 'city', refreshKey, emptyText = 
     <ol className="rank-list">
       {rows.map(r => (
         <li key={r.id} className={r.me ? 'me' : ''}>
-          <span className="pos">{MEDAL[r.rank] || r.rank}</span>
-          <span className="who">{r.e} {r.n} <em>@{r.un}</em></span>
+          <span className={`pos p${r.rank}`}>{r.rank}</span>
+          <Avatar p={r} size="sm" /><span className="who">{r.n} <em>@{r.un}</em></span>
           <span className="pts">{r.pts}</span>
         </li>
       ))}

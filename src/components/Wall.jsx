@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Flag } from 'lucide-react'
 import { api, errorText } from '../lib/api'
-import { AuthImg, Spinner, timeAgo } from './ui'
+import { AuthImg, Spinner, Avatar, timeAgo } from './ui'
 
 export default function Wall({ room, refreshKey, emptyText, onToast }) {
   const [posts, setPosts] = useState(null)
@@ -31,8 +31,8 @@ export default function Wall({ room, refreshKey, emptyText, onToast }) {
         <figure key={p.id} className="post">
           <AuthImg id={p.id} alt={p.ch.text} />
           <figcaption>
-            <span className="post-ch">{p.ch.emoji} {p.ch.text} <em>+{p.ch.pts}</em></span>
-            <span className="post-by">{p.by ? `${p.by.e} @${p.by.un}` : ''} · {timeAgo(p.at)}</span>
+            <span className="post-ch">{p.ch.text} <em>+{p.ch.pts}</em></span>
+            <span className="post-by">{p.by && <Avatar p={p.by} size="xs" />} {p.by ? `@${p.by.un}` : ''} · {timeAgo(p.at)}</span>
             {!p.mine && !p.reported && <button className="post-flag" onClick={() => report(p)} aria-label="Denunciar"><Flag size={14} /></button>}
           </figcaption>
         </figure>

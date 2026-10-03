@@ -4,10 +4,8 @@ import { CITIES } from '../lib/cities'
 import { api, errorText } from '../lib/api'
 import { Spinner } from './ui'
 
-const AVATARS = ['😎', '💃', '🕺', '🦄', '👽', '🐯', '🦊', '🐸', '🍒', '🔥', '⚡', '👑', '🌈', '🪩', '🍑', '🌶️']
-
 export default function Onboarding({ onDone }) {
-  const [f, setF] = useState({ name: '', username: '', birthdate: '', city: 'girona', emoji: '😎', public: true })
+  const [f, setF] = useState({ name: '', username: '', birthdate: '', city: 'girona', public: true })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const set = (k, v) => setF(s => ({ ...s, [k]: v }))
@@ -25,7 +23,7 @@ export default function Onboarding({ onDone }) {
     <div className="app onboarding">
       <div className="hero">
         <h1 className="brand-big">hoy<span>se</span>sale</h1>
-        <p>Mira dónde sale la gente esta noche, queda con tu grupo y lía la noche con retos.</p>
+        <p>Descubre dónde sale la gente esta noche, queda con tu grupo y completa los retos de la noche.</p>
       </div>
 
       <form className="card-form" onSubmit={submit}>
@@ -43,15 +41,8 @@ export default function Onboarding({ onDone }) {
         <div className="city-grid">
           {Object.entries(CITIES).map(([id, c]) => (
             <button type="button" key={id} className={f.city === id ? 'sel' : ''} onClick={() => set('city', id)}>
-              <span>{c.emoji}</span>{c.name}
+              {c.name}
             </button>
-          ))}
-        </div>
-
-        <span className="label">Avatar</span>
-        <div className="avatar-grid">
-          {AVATARS.map(a => (
-            <button type="button" key={a} className={a === f.emoji ? 'sel' : ''} onClick={() => set('emoji', a)} aria-label={`Avatar ${a}`}>{a}</button>
           ))}
         </div>
 
@@ -66,7 +57,7 @@ export default function Onboarding({ onDone }) {
         </div>
 
         {error && <p className="error">{error}</p>}
-        <button className="btn primary" disabled={busy || !ready}>{busy ? <Spinner /> : '¡Vamos! 🪩'}</button>
+        <button className="btn primary" disabled={busy || !ready}>{busy ? <Spinner /> : 'Crear cuenta'}</button>
         <p className="small">Al entrar confirmas que tienes 18 años o más. Sin email ni contraseña: tu sesión vive en este móvil (desde Perfil puedes pasarla a otro).</p>
       </form>
     </div>

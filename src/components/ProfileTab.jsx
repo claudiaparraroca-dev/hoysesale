@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Globe, Lock, Search, UserPlus, UserCheck, X, Link2, LogOut } from 'lucide-react'
 import { CITIES } from '../lib/cities'
 import { api, errorText, getSession, setSession } from '../lib/api'
-import { Spinner, Person } from './ui'
+import { Spinner, Person, Avatar } from './ui'
 
 export default function ProfileTab({ me, refreshMe, onToast }) {
   const { user } = me
@@ -35,7 +35,7 @@ export default function ProfileTab({ me, refreshMe, onToast }) {
   return (
     <main className="profile">
       <section className="me-card">
-        <span className="av xl">{user.e}</span>
+        <Avatar p={user} size="xl" />
         <div><h2>{user.n}</h2><span className="muted">@{user.un}</span></div>
       </section>
 
@@ -52,7 +52,7 @@ export default function ProfileTab({ me, refreshMe, onToast }) {
       <span className="label">Mi zona</span>
       <div className="city-grid">
         {Object.entries(CITIES).map(([id, c]) => (
-          <button key={id} className={user.city === id ? 'sel' : ''} disabled={busy} onClick={() => patch({ city: id })}><span>{c.emoji}</span>{c.name}</button>
+          <button key={id} className={user.city === id ? 'sel' : ''} disabled={busy} onClick={() => patch({ city: id })}>{c.name}</button>
         ))}
       </div>
 

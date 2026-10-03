@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Moon, Target, MessageCircle, User } from 'lucide-react'
+import { Moon, Target, MessageCircle, User, MapPin, ChevronDown } from 'lucide-react'
 import { CITIES } from './lib/cities'
 import { api, getSession, setSession } from './lib/api'
 import Onboarding from './components/Onboarding'
@@ -58,12 +58,12 @@ export default function App() {
     <div className="app">
       <header className="top">
         <h1 className="brand">hoy<span>se</span>sale</h1>
-        <button className="city-pill" onClick={() => setCityPicker(v => !v)}>{CITIES[city].emoji} {CITIES[city].name} ▾</button>
+        <button className="city-pill" onClick={() => setCityPicker(v => !v)}><MapPin size={14} /> {CITIES[city].name} <ChevronDown size={14} /></button>
       </header>
       {cityPicker && (
         <div className="city-menu">
           {Object.entries(CITIES).map(([id, c]) => (
-            <button key={id} className={id === city ? 'sel' : ''} onClick={() => { setCity(id); setOpenVenue(null); setCityPicker(false) }}>{c.emoji} {c.name}</button>
+            <button key={id} className={id === city ? 'sel' : ''} onClick={() => { setCity(id); setOpenVenue(null); setCityPicker(false) }}>{c.name}</button>
           ))}
         </div>
       )}

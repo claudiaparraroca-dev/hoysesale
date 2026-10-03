@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Send, Flag } from 'lucide-react'
 import { api, errorText } from '../lib/api'
-import { Spinner } from './ui'
+import { Spinner, Avatar } from './ui'
 
 const POLL_MS = 3000
 
@@ -69,7 +69,7 @@ export default function Chat({ room, emptyText, onToast }) {
         {msgs?.length === 0 && <p className="empty">{emptyText}</p>}
         {msgs?.map(m => (
           <div key={m.id} className={`msg ${m.mine ? 'mine' : ''}`}>
-            {!m.mine && m.by && <span className="msg-by">{m.by.e} @{m.by.un}</span>}
+            {!m.mine && m.by && <span className="msg-by"><Avatar p={m.by} size="xs" /> @{m.by.un}</span>}
             <span className="msg-text">{m.t}</span>
             {!m.mine && <button className="msg-flag" onClick={() => report(m)} aria-label="Denunciar"><Flag size={12} /></button>}
           </div>
