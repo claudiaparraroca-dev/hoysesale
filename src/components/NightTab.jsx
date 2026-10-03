@@ -49,7 +49,9 @@ export default function NightTab({ city, me, onToast, openVenue, setOpenVenue, o
     catch (err) { onToast(errorText(err)) }
   }
 
-  if (!night) return <main><p className="empty"><Spinner size={24} /></p></main>
+  // al cambiar de ciudad, `night` aún trae los datos de la anterior hasta que llega la respuesta nueva:
+  // pintar la lista nueva con datos viejos rompía el orden (friends undefined) y dejaba la pantalla en negro
+  if (!night || night.city !== city) return <main><p className="empty"><Spinner size={24} /></p></main>
 
   const counts = Object.fromEntries(night.venues.map(v => [v.id, v]))
   const picker = picking && (
