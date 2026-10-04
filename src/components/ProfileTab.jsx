@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Globe, Lock, Search, UserPlus, UserCheck, X, Smartphone, LogOut, ShieldCheck, Trash2, FileText, MonitorSmartphone } from 'lucide-react'
+import { Globe, Lock, Search, UserPlus, UserCheck, X, Smartphone, LogOut, ShieldCheck, Trash2, FileText, MonitorSmartphone, Pencil } from 'lucide-react'
+import EditProfile from './EditProfile'
 import { CITIES } from '../lib/cities'
 import { api, errorText, setSession } from '../lib/api'
 import { Spinner, Person, Avatar, Sheet } from './ui'
@@ -9,7 +10,7 @@ import AdminPanel from './AdminPanel'
 export default function ProfileTab({ me, refreshMe, onToast }) {
   const { user } = me
   const [busy, setBusy] = useState(false)
-  const [sheet, setSheet] = useState(null) // 'link' | 'delete' | 'privacy' | 'terms' | 'admin'
+  const [sheet, setSheet] = useState(null) // 'edit' | 'link' | 'delete' | 'privacy' | 'terms' | 'admin'
 
   async function patch(body) {
     setBusy(true)
@@ -38,7 +39,8 @@ export default function ProfileTab({ me, refreshMe, onToast }) {
     <main className="profile">
       <section className="me-card">
         <Avatar p={user} size="xl" />
-        <div><h2>{user.n}</h2><span className="muted">@{user.un}</span></div>
+        <div className="me-names"><h2>{user.n}</h2><span className="muted">@{user.un}</span></div>
+        <button className="chip-btn" onClick={() => setSheet('edit')}><Pencil size={14} /> Editar</button>
       </section>
 
       <span className="label">Privacidad</span>
@@ -99,6 +101,7 @@ export default function ProfileTab({ me, refreshMe, onToast }) {
         <button className="danger" onClick={() => setSheet('delete')}><Trash2 size={18} /><span>Borrar mi cuenta</span></button>
       </div>
 
+      {sheet === 'edit' && <EditProfile user={user} refreshMe={refreshMe} onToast={onToast} onClose={() => setSheet(null)} />}
       {sheet === 'link' && <LinkSheet onClose={() => setSheet(null)} />}
       {sheet === 'delete' && <DeleteSheet username={user.un} onClose={() => setSheet(null)} />}
       {(sheet === 'privacy' || sheet === 'terms') && <Legal page={sheet} onClose={() => setSheet(null)} />}

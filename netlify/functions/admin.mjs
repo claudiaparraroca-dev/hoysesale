@@ -3,6 +3,7 @@
 // POST /api/admin/resolve           { key, action: 'delete' | 'restore' }
 // POST /api/admin/ban               { uid } → expulsa (borra sus datos y bloquea su @)
 // GET  /api/admin/stats             → números rápidos
+// GET  /api/admin/users?q=          → usuarios registrados (buscar por @ o nombre)
 import { CITIES, HOME } from '../../src/lib/cities.js'
 import { nightKey } from '../../src/lib/night.js'
 import { auth, body, json } from '../lib/http.mjs'
@@ -18,6 +19,7 @@ export default async (req) => {
   if (p === '/api/admin/resolve' && req.method === 'POST') return resolve(req)
   if (p === '/api/admin/ban' && req.method === 'POST') return ban(req, admin)
   if (p === '/api/admin/stats' && req.method === 'GET') return stats()
+  if (p === '/api/admin/users' && req.method === 'GET') return users(new URL(req.url).searchParams.get('q'))
   return json({ error: 'not-found' }, 400)
 }
 
@@ -72,4 +74,22 @@ async function stats() {
   return json({ users, tonight, openReports: open, night })
 }
 
-export const config = { path: ['/api/admin/reports', '/api/admin/resolve', '/api/admin/ban', '/api/admin/stats'] }
+async function users(q) {
+  const term = String(q || '').toLowerCase().trim()
+  const s = store()
+  const keys = []
+  for await (const page of s.list({ prefix: 'user/', paginate: true })) keys.push(...page.blobs.map(b => b.key))
+  const all = (await Promise.all(keys.map(k => read(k)))).filter(Boolean)
+  const list = all
+    .filter(u => !term || u.username?.includes(term) || u.name?.toLowerCase().includes(term))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, 100)
+    .map(u => ({
+      id: u.id, un: u.username, n: u.name, p: u.photo?.v || null,
+      createdAt: u.createdAt, city: u.city, public: u.public, banned: !!u.banned, verified: !!u.verified,
+      friends: u.friends?.length || 0, groups: u.groups?.length || 0, photos: u.photos?.length || 0,
+    }))
+  return json({ total: all.length, users: list })
+}
+
+export const config = { path: ['/api/admin/reports', '/api/admin/resolve', '/api/admin/ban', '/api/admin/stats', '/api/admin/users'] }

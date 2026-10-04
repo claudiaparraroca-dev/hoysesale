@@ -74,6 +74,8 @@ export const ERRORS = {
   'too-many': 'Demasiados intentos. Espera un poco.',
   'bad-code': 'Código incorrecto o caducado.',
   confirm: 'Escribe tu usuario exactamente para confirmar.',
+  'username-cooldown': 'Ya cambiaste tu @ hace poco. Espera unos días.',
+  'bad-input': 'Esa imagen no vale. Prueba con otra.',
 }
 
 export const errorText = err => ERRORS[err?.code] || 'Algo ha fallado. Inténtalo de nuevo.'

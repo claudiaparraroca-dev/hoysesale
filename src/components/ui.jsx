@@ -36,9 +36,11 @@ const initials = name => (name || '?').trim().split(/\s+/).slice(0, 2).map(w => 
 const hue = key => hash(String(key || '')) % 360
 
 export function Avatar({ p, size = 'md' }) {
+  const [broken, setBroken] = useState(false)
+  const photo = p?.p && p?.id && !broken
   return (
     <span className={`av ${size}`} style={{ '--h': hue(p?.un || p?.n) }} title={p?.un ? `@${p.un}` : undefined}>
-      {initials(p?.n)}
+      {photo ? <img src={`/api/avatar/${p.id}?v=${p.p}`} alt="" loading="lazy" onError={() => setBroken(true)} /> : initials(p?.n)}
     </span>
   )
 }

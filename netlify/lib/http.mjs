@@ -51,7 +51,7 @@ export const cleanText = (s, max) =>
   String(s || '').replace(/[\u0000-\u0008\u000b-\u001f<>]/g, '').replace(/[ \t]+/g, ' ').trim().slice(0, max)
 
 // Lo que otros pueden ver de un usuario
-export const card = u => ({ id: u.id, un: u.username, n: u.name, e: u.emoji, v: !!u.verified })
+export const card = u => ({ id: u.id, un: u.username, n: u.name, p: u.photo?.v || null, v: !!u.verified })
 
 // IP del cliente (Netlify la da en context.ip); se guarda solo como hash
 export const clientKey = (req, context) =>

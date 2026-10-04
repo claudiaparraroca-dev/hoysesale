@@ -69,6 +69,7 @@ export async function deleteAccount(uid, { keepBan = false } = {}) {
     }
     await photos().delete(pid)
   }
+  await photos().delete(`avatar/${uid}`)
 
   if (keepBan) {
     // Se queda un registro mínimo para que no pueda volver con el mismo @

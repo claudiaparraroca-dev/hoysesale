@@ -87,7 +87,7 @@ async function me(req) {
   const people = await cards([...user.friends, ...user.reqIn, ...user.reqOut])
   const groups = (await Promise.all(user.groups.map(g => read(`group/${g}`)))).filter(Boolean)
   return json({
-    user: { ...card(user), city: user.city, public: user.public, admin: user.isAdmin, sessions: (user.sessions || []).length || 1 },
+    user: { ...card(user), city: user.city, public: user.public, admin: user.isAdmin, sessions: (user.sessions || []).length || 1, usernameNext: (user.usernameChangedAt || 0) + 7 * 86400 * 1000 },
     friends: user.friends.map(id => people[id]).filter(Boolean),
     reqIn: user.reqIn.map(id => people[id]).filter(Boolean),
     reqOut: user.reqOut.map(id => people[id]).filter(Boolean),
