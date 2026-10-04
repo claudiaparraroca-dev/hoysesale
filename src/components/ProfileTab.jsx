@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Globe, Lock, Search, UserPlus, UserCheck, X, Link2, LogOut } from 'lucide-react'
+import { Globe, Lock, Search, UserPlus, UserCheck, X, Smartphone, LogOut, ShieldCheck, Trash2, FileText, MonitorSmartphone } from 'lucide-react'
 import { CITIES } from '../lib/cities'
-import { api, errorText, getSession, setSession } from '../lib/api'
-import { Spinner, Person, Avatar } from './ui'
+import { api, errorText, setSession } from '../lib/api'
+import { Spinner, Person, Avatar, Sheet } from './ui'
+import Legal from './Legal'
+import AdminPanel from './AdminPanel'
 
 export default function ProfileTab({ me, refreshMe, onToast }) {
   const { user } = me
   const [busy, setBusy] = useState(false)
+  const [sheet, setSheet] = useState(null) // 'link' | 'delete' | 'privacy' | 'terms' | 'admin'
 
   async function patch(body) {
     setBusy(true)
@@ -18,18 +21,17 @@ export default function ProfileTab({ me, refreshMe, onToast }) {
     try { await api(`/api/friends/${id}/${action}`, { method: 'POST' }); await refreshMe() } catch (err) { onToast(errorText(err)) }
   }
 
-  async function copyLogin() {
-    const s = getSession()
-    // En el #fragmento: no viaja al servidor ni queda en los logs
-    const url = `${location.origin}/#login=${s.id}.${s.token}`
-    if (!confirm('Esto copia un enlace que abre TU cuenta en otro móvil. No se lo pases a nadie. ¿Copiar?')) return
-    try { await navigator.clipboard.writeText(url); onToast('Enlace copiado. Ábrelo en tu otro móvil.') } catch { prompt('Copia este enlace:', url) }
-  }
-
-  function logout() {
-    if (!confirm('Si sales sin guardar el enlace de acceso, no podrás volver a esta cuenta. ¿Salir?')) return
+  async function logout() {
+    if (!confirm('¿Cerrar sesión en este móvil? Para volver a entrar necesitarás un código desde otro móvil donde tengas la sesión abierta.')) return
+    try { await api('/api/logout', { method: 'POST' }) } catch { /* aunque falle, salimos */ }
     setSession(null)
     location.reload()
+  }
+
+  async function logoutOthers() {
+    if (!confirm('¿Cerrar la sesión en todos los demás dispositivos?')) return
+    try { await api('/api/logout-others', { method: 'POST' }); await refreshMe(); onToast('Listo: solo queda abierta en este móvil.') }
+    catch (err) { onToast(errorText(err)) }
   }
 
   return (
@@ -80,11 +82,71 @@ export default function ProfileTab({ me, refreshMe, onToast }) {
       ))}
       {me.reqOut.length > 0 && <p className="small">Pendientes: {me.reqOut.map(p => `@${p.un}`).join(', ')}</p>}
 
-      <div className="danger-zone">
-        <button className="btn ghost" onClick={copyLogin}><Link2 size={16} /> Pasar mi cuenta a otro móvil</button>
-        <button className="btn ghost danger" onClick={logout}><LogOut size={16} /> Cerrar sesión</button>
+      {user.admin && (
+        <>
+          <h3 className="mini-title">Administración</h3>
+          <button className="btn ghost" onClick={() => setSheet('admin')}><ShieldCheck size={16} /> Panel de moderación</button>
+        </>
+      )}
+
+      <h3 className="mini-title">Cuenta y seguridad</h3>
+      <div className="menu">
+        <button onClick={() => setSheet('link')}><Smartphone size={18} /><span>Entrar desde otro móvil</span></button>
+        <button onClick={logoutOthers}><MonitorSmartphone size={18} /><span>Cerrar sesión en otros dispositivos</span><em>{user.sessions}</em></button>
+        <button onClick={() => setSheet('privacy')}><FileText size={18} /><span>Política de privacidad</span></button>
+        <button onClick={() => setSheet('terms')}><FileText size={18} /><span>Condiciones de uso</span></button>
+        <button onClick={logout}><LogOut size={18} /><span>Cerrar sesión</span></button>
+        <button className="danger" onClick={() => setSheet('delete')}><Trash2 size={18} /><span>Borrar mi cuenta</span></button>
       </div>
+
+      {sheet === 'link' && <LinkSheet onClose={() => setSheet(null)} />}
+      {sheet === 'delete' && <DeleteSheet username={user.un} onClose={() => setSheet(null)} />}
+      {(sheet === 'privacy' || sheet === 'terms') && <Legal page={sheet} onClose={() => setSheet(null)} />}
+      {sheet === 'admin' && <AdminPanel onClose={() => setSheet(null)} onToast={onToast} />}
     </main>
+  )
+}
+
+function LinkSheet({ onClose }) {
+  const [code, setCode] = useState(null)
+  const [error, setError] = useState('')
+  const [left, setLeft] = useState(600)
+  useEffect(() => {
+    api('/api/sessions/link', { method: 'POST' }).then(r => setCode(r.code)).catch(err => setError(errorText(err)))
+    const t = setInterval(() => setLeft(l => Math.max(0, l - 1)), 1000)
+    return () => clearInterval(t)
+  }, [])
+  return (
+    <Sheet title="Entrar desde otro móvil" onClose={onClose}>
+      <p className="small">En el otro móvil abre la app, pulsa <strong>«Ya tengo cuenta en otro móvil»</strong> y escribe este código. Sirve una sola vez. No se lo enseñes a nadie.</p>
+      {error && <p className="error">{error}</p>}
+      {!code && !error && <Spinner />}
+      {code && <div className="big-code">{code.slice(0, 4)} {code.slice(4)}</div>}
+      {code && <p className="small center">{left > 0 ? `Caduca en ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : 'Caducado. Cierra y genera otro.'}</p>}
+    </Sheet>
+  )
+}
+
+function DeleteSheet({ username, onClose }) {
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  async function remove() {
+    setBusy(true); setError('')
+    try {
+      await api('/api/me', { method: 'DELETE', body: { confirm: text.trim().toLowerCase() } })
+      setSession(null)
+      location.reload()
+    } catch (err) { setError(errorText(err)); setBusy(false) }
+  }
+  return (
+    <Sheet title="Borrar mi cuenta" onClose={onClose} busy={busy}>
+      <p className="small">Se borrará al momento y para siempre: tu perfil, amistades, grupos, mensajes, fotos, puntos y propuestas. No se puede deshacer.</p>
+      <label className="label" htmlFor="confirm">Escribe tu usuario <strong>{username}</strong> para confirmar</label>
+      <input id="confirm" className="text-in" value={text} autoCapitalize="none" onChange={e => setText(e.target.value)} />
+      {error && <p className="error">{error}</p>}
+      <button className="btn danger-solid" disabled={busy || text.trim().toLowerCase() !== username} onClick={remove}>{busy ? <Spinner /> : 'Borrar mi cuenta para siempre'}</button>
+    </Sheet>
   )
 }
 

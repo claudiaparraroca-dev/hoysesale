@@ -69,6 +69,11 @@ export const ERRORS = {
   text: 'El reto tiene que tener al menos 8 letras.',
   'too-many-proposals': 'Ya tienes 3 retos propuestos. Espera a que salgan.',
   forbidden: 'No tienes acceso.',
+  terms: 'Tienes que aceptar las condiciones y la privacidad.',
+  'too-many-signups': 'Demasiadas cuentas creadas desde esta conexión. Prueba mañana.',
+  'too-many': 'Demasiados intentos. Espera un poco.',
+  'bad-code': 'Código incorrecto o caducado.',
+  confirm: 'Escribe tu usuario exactamente para confirmar.',
 }
 
 export const errorText = err => ERRORS[err?.code] || 'Algo ha fallado. Inténtalo de nuevo.'

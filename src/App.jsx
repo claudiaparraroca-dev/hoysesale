@@ -9,15 +9,6 @@ import GroupsTab from './components/GroupsTab'
 import ProfileTab from './components/ProfileTab'
 import { Spinner } from './components/ui'
 
-// Enlace "pasar cuenta a otro móvil": /#login=<id>.<token>
-function takeLoginFromHash() {
-  const m = /^#login=([\w-]+)\.([\w-]+)$/.exec(location.hash)
-  if (!m) return
-  setSession({ id: m[1], token: m[2] })
-  history.replaceState(null, '', location.pathname + location.search)
-}
-takeLoginFromHash()
-
 export default function App() {
   const [session, setSessionState] = useState(getSession)
   const [me, setMe] = useState(null)

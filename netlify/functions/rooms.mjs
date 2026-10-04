@@ -8,7 +8,7 @@
 // ha marcado que va esta noche). 'g:{gid}' es un grupo privado (solo miembros).
 // El chat de los locales se reinicia cada noche; el de los grupos se mantiene.
 import { nightKey } from '../../src/lib/night.js'
-import { auth, body, json, randomId, cleanText } from '../lib/http.mjs'
+import { auth, body, json, randomId, cleanText, rateLimit } from '../lib/http.mjs'
 import { read, update, photos } from '../lib/db.mjs'
 import { roomAccess, cards, HIDE_AFTER_REPORTS } from '../lib/game.mjs'
 
@@ -45,7 +45,7 @@ async function wall(user, url) {
 async function photo(user, id) {
   const meta = await read(`photo-meta/${id}`)
   if (!meta) return json({ error: 'not-found' }, 400)
-  let allowed = meta.uid === user.id
+  let allowed = meta.uid === user.id || user.isAdmin
   for (const room of meta.rooms) {
     if (allowed) break
     allowed = (await roomAccess(user, room, meta.night)).ok
@@ -100,15 +100,31 @@ async function report(user, req) {
   const night = nightKey()
   const access = await roomAccess(user, room, night)
   if (!access.ok) return json({ error: 'forbidden' }, 400)
-  const key = input.kind === 'msg' ? chatKey(room, night) : `wall/${room}/${night}`
-  const field = input.kind === 'msg' ? 'msgs' : 'posts'
-  await update(key, doc => {
+  if (!(await rateLimit(`report/${user.id}`, 30, 3600 * 1000))) return json({ error: 'too-many' }, 429)
+  const kind = input.kind === 'msg' ? 'msg' : 'post'
+  const docKey = kind === 'msg' ? chatKey(room, night) : `wall/${room}/${night}`
+  const field = kind === 'msg' ? 'msgs' : 'posts'
+  let reported = null
+  await update(docKey, doc => {
     const item = doc?.[field]?.find(x => x.id === input.id)
     if (!item || item.reports.includes(user.id)) return undefined
     item.reports.push(user.id)
+    reported = item
     return doc
   })
-  console.log(`report ${input.kind} ${input.id} in ${room} by ${user.id}`)
+  // Cola de moderación para el panel de admin
+  if (reported) {
+    await update('reports/open', doc => {
+      doc ||= { items: {} }
+      const key = `${docKey}|${field}|${reported.id}`
+      doc.items[key] = {
+        key, docKey, field, id: reported.id, room, kind, uid: reported.uid,
+        text: kind === 'msg' ? reported.t : reported.ch?.text,
+        reports: reported.reports.length, at: Date.now(),
+      }
+      return doc
+    })
+  }
   return json({ ok: true })
 }
 

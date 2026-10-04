@@ -94,6 +94,8 @@ async function complete(user, req) {
   }
   // Las fotos guardan en qué salas están (para comprobar quién puede verlas)
   await update(`photo-meta/${photoId}`, () => ({ uid: user.id, rooms, city, night }))
+  // …y el usuario sabe qué fotos son suyas (para poder borrarlas si borra la cuenta)
+  await update(`user/${user.id}`, u => ({ ...u, photos: [...(u.photos || []), photoId].slice(-500) }))
 
   return json({ ok: true, reason: verdict.reason, points: gained, rooms })
 }

@@ -62,7 +62,7 @@ export async function cards(ids) {
   const out = {}
   await Promise.all([...new Set(ids)].map(async id => {
     const u = await read(`user/${id}`)
-    if (u) out[id] = { id, un: u.username, n: u.name, e: u.emoji }
+    if (u && !u.banned) out[id] = { id, un: u.username, n: u.name, e: u.emoji, v: !!u.verified }
   }))
   return out
 }

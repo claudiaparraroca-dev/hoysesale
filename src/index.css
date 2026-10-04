@@ -361,3 +361,32 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   background: var(--text); color: var(--bg); padding: 11px 16px; border-radius: 12px; font-weight: 600; font-size: 14px;
   z-index: 30; width: max-content; max-width: calc(100% - 32px); animation: up 0.2s;
 }
+
+/* ── Legal, cuenta y moderación ─────────── */
+.legal { display: flex; flex-direction: column; gap: 14px; }
+.legal h3 { margin: 0 0 4px; font-size: 15px; letter-spacing: 0; }
+.legal p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.check.terms { align-items: flex-start; font-size: 14px; line-height: 1.45; background: none; padding: 6px 0; }
+.check.terms input { margin-top: 2px; flex-shrink: 0; }
+.inline-link { color: var(--accent); font-weight: 600; text-decoration: underline; padding: 0; font-size: inherit; }
+.menu { display: flex; flex-direction: column; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.menu button { display: flex; align-items: center; gap: 12px; padding: 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 15px; }
+.menu button:last-child { border-bottom: 0; }
+.menu button svg { color: var(--muted); }
+.menu button span { flex: 1; }
+.menu button em { font-style: normal; color: var(--muted); font-size: 13px; }
+.menu button.danger, .menu button.danger svg { color: var(--red); }
+.big-code { font-size: 34px; font-weight: 800; letter-spacing: 0.15em; text-align: center; padding: 18px; background: var(--bg-3); border-radius: 12px; font-variant-numeric: tabular-nums; }
+.text-in { font: inherit; font-size: 16px; color: var(--text); background: var(--bg-3); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; outline: none; width: 100%; }
+.btn.danger-solid { background: var(--red); color: #fff; }
+.btn.danger-solid:disabled { opacity: 0.4; }
+.reports { display: flex; flex-direction: column; gap: 10px; }
+.report { display: flex; flex-direction: column; gap: 8px; background: var(--bg-3); border-radius: 12px; padding: 12px; }
+.report-head { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.report-head span:nth-child(2) { flex: 1; }
+.report-count { color: var(--red); font-weight: 700; }
+.report-photo { width: 140px; border-radius: 10px; overflow: hidden; }
+.report-photo img, .report-photo .img-ph { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; }
+.report-text { margin: 0; font-size: 15px; }
+.danger-chip { color: var(--red); }
+.admin-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
