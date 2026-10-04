@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Globe, Lock, Search, UserPlus, UserCheck, X, Smartphone, LogOut, ShieldCheck, Trash2, FileText, MonitorSmartphone, Pencil } from 'lucide-react'
+import { Globe, Lock, UserCheck, X, Smartphone, LogOut, ShieldCheck, Trash2, FileText, MonitorSmartphone, Pencil } from 'lucide-react'
 import EditProfile from './EditProfile'
+import FindPeople from './FindPeople'
 import { CITIES } from '../lib/cities'
 import { api, errorText, setSession } from '../lib/api'
 import { Spinner, Person, Avatar, Sheet } from './ui'
@@ -74,8 +75,8 @@ export default function ProfileTab({ me, refreshMe, onToast }) {
         </>
       )}
 
-      <h3 className="mini-title">Añadir amigos</h3>
-      <FriendSearch me={me} onAction={friendAction} />
+      <h3 className="mini-title">Buscar gente</h3>
+      <FindPeople me={me} onAction={friendAction} />
 
       <h3 className="mini-title">Amigos ({me.friends.length})</h3>
       {me.friends.length === 0 && <p className="small">Busca a tus amigos por su @ para ver dónde salen.</p>}
@@ -153,28 +154,3 @@ function DeleteSheet({ username, onClose }) {
   )
 }
 
-function FriendSearch({ me, onAction }) {
-  const [q, setQ] = useState('')
-  const [results, setResults] = useState(null)
-  useEffect(() => {
-    if (q.length < 2) { setResults(null); return }
-    const t = setTimeout(() => api(`/api/search?q=${encodeURIComponent(q)}`).then(r => setResults(r.results)).catch(() => setResults([])), 300)
-    return () => clearTimeout(t)
-  }, [q])
-  const friends = new Set(me.friends.map(f => f.id))
-  const sent = new Set(me.reqOut.map(f => f.id))
-  return (
-    <div className="search">
-      <div className="search-box"><Search size={16} /><input value={q} placeholder="Buscar @usuario" autoCapitalize="none" onChange={e => setQ(e.target.value.toLowerCase())} /></div>
-      {results === null && q.length >= 2 && <Spinner />}
-      {results?.length === 0 && <p className="small">Nadie con ese @.</p>}
-      {results?.map(p => (
-        <Person key={p.id} p={p} right={
-          friends.has(p.id) ? <span className="muted small">Amigos</span>
-            : sent.has(p.id) ? <span className="muted small">Enviada</span>
-            : <button className="chip-btn" onClick={() => onAction(p.id, 'request')}><UserPlus size={16} /> Añadir</button>
-        } />
-      ))}
-    </div>
-  )
-}

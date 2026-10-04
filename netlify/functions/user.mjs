@@ -7,12 +7,15 @@
 // POST   /api/sessions/link      → código de un solo uso (10 min) para entrar desde otro móvil
 // POST   /api/sessions/claim     { code } → crea una sesión nueva en este dispositivo
 // GET    /api/users/:username    → perfil de otra persona (lo que me deja ver)
-// GET    /api/search?q=          → buscar por @usuario
+// GET    /api/search?q=          → buscar personas por nombre o @ (tipo Instagram)
+// GET    /api/suggestions        → "amigos en común": gente que tus amigos tienen y tú no
+// POST   /api/suggestions/dismiss { id } → no volver a sugerir a esa persona
 import { randomInt } from 'node:crypto'
 import { auth, body, json, randomId, cleanText, card, newSession, clientKey, rateLimit } from '../lib/http.mjs'
 import { read, write, update, store } from '../lib/db.mjs'
 import { validCity, cards } from '../lib/game.mjs'
 import { deleteAccount } from '../lib/account.mjs'
+import { indexUser, searchPeople, suggestions } from '../lib/search.mjs'
 import { CITIES } from '../../src/lib/cities.js'
 import { nightKey } from '../../src/lib/night.js'
 import { TERMS_VERSION } from '../../src/lib/legal.js'
@@ -33,6 +36,8 @@ export default async (req, context) => {
   if (p === '/api/sessions/link' && m === 'POST') return makeLink(req)
   if (p === '/api/sessions/claim' && m === 'POST') return claimLink(req, context)
   if (p === '/api/search') return search(req)
+  if (p === '/api/suggestions' && m === 'GET') return suggest(req)
+  if (p === '/api/suggestions/dismiss' && m === 'POST') return dismiss(req)
   if (context.params?.username) return profile(req, context.params.username.toLowerCase())
   return json({ error: 'not-found' }, 400)
 }
@@ -77,6 +82,7 @@ async function signup(req, context) {
     friends: [], reqIn: [], reqOut: [], groups: [], photos: [],
     createdAt: Date.now(),
   })
+  await indexUser(await read(`user/${id}`))
   const token = await newSession(id)
   return json({ id, token })
 }
@@ -108,6 +114,7 @@ async function patchMe(req) {
     if (typeof input.public === 'boolean') u.public = input.public
     return u
   })
+  if (input.name !== undefined) await indexUser(next)
   // Si pasa a privado, deja de salir en público ya esta noche
   if (input.public === false) {
     const night = nightKey()
@@ -187,15 +194,25 @@ async function profile(req, username) {
 async function search(req) {
   const viewer = await auth(req)
   if (!viewer) return json({ error: 'auth' }, 401)
-  if (!(await rateLimit(`search/${viewer.id}`, 60, 60 * 1000))) return json({ results: [] })
-  const q = String(new URL(req.url).searchParams.get('q') || '').toLowerCase().replace(/[^a-z0-9_.]/g, '')
-  if (q.length < 2) return json({ results: [] })
-  const { blobs } = await store().list({ prefix: `uname/${q}` })
-  const ids = (await Promise.all(blobs.slice(0, 15).map(b => read(b.key)))).filter(Boolean).map(r => r.id)
-  const people = await cards(ids)
-  return json({ results: ids.map(id => people[id]).filter(p => p && p.id !== viewer.id) })
+  if (!(await rateLimit(`search/${viewer.id}`, 90, 60 * 1000))) return json({ results: [] })
+  const q = String(new URL(req.url).searchParams.get('q') || '').slice(0, 40)
+  return json({ results: await searchPeople(viewer, q) })
+}
+
+async function suggest(req) {
+  const viewer = await auth(req)
+  if (!viewer) return json({ error: 'auth' }, 401)
+  return json({ results: await suggestions(viewer) })
+}
+
+async function dismiss(req) {
+  const viewer = await auth(req)
+  if (!viewer) return json({ error: 'auth' }, 401)
+  const id = String((await body(req))?.id || '')
+  if (id) await update(`user/${viewer.id}`, u => ({ ...u, dismissed: [...new Set([...(u.dismissed || []), id])].slice(-300) }))
+  return json({ ok: true })
 }
 
 export const config = {
-  path: ['/api/signup', '/api/me', '/api/logout', '/api/logout-others', '/api/sessions/link', '/api/sessions/claim', '/api/search', '/api/users/:username'],
+  path: ['/api/signup', '/api/me', '/api/logout', '/api/logout-others', '/api/sessions/link', '/api/sessions/claim', '/api/search', '/api/suggestions', '/api/suggestions/dismiss', '/api/users/:username'],
 }

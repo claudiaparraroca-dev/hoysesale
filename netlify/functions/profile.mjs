@@ -5,6 +5,7 @@
 import { auth, body, json, card, rateLimit } from '../lib/http.mjs'
 import { read, update, store, photos } from '../lib/db.mjs'
 import { judgeAvatar, parseImage, isRateLimit } from '../lib/referee.mjs'
+import { indexUser } from '../lib/search.mjs'
 
 const USERNAME = /^[a-z0-9_.]{3,20}$/
 const COOLDOWN = 7 * 86400 * 1000
@@ -34,6 +35,7 @@ async function changeUsername(user, req) {
   if (!res.modified) return json({ error: 'username-taken' }, 409)
   const next = await update(`user/${user.id}`, u => ({ ...u, username, usernameChangedAt: Date.now(), previousUsernames: [...(u.previousUsernames || []), u.username].slice(-5) }))
   await s.delete(`uname/${user.username}`)
+  await indexUser(next)
   return json({ user: card(next) })
 }
 
@@ -50,12 +52,14 @@ async function setPhoto(user, req) {
   if (!verdict.safe) return json({ ok: false, reason: verdict.reason })
   await photos().set(`avatar/${user.id}`, Buffer.from(image.data, 'base64'), { metadata: { type: image.mediaType } })
   const next = await update(`user/${user.id}`, u => ({ ...u, photo: { v: Date.now() } }))
+  await indexUser(next)
   return json({ ok: true, reason: verdict.reason, user: card(next) })
 }
 
 async function removePhoto(user) {
   await photos().delete(`avatar/${user.id}`)
   const next = await update(`user/${user.id}`, u => { delete u.photo; return u })
+  await indexUser(next)
   return json({ ok: true, user: card(next) })
 }
 

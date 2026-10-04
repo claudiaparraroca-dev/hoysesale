@@ -3,6 +3,7 @@
 import { CITIES } from '../../src/lib/cities.js'
 import { nightKey } from '../../src/lib/night.js'
 import { read, update, store, photos } from './db.mjs'
+import { unindexUser } from './search.mjs'
 
 const without = (arr = [], id) => arr.filter(x => x !== id)
 
@@ -70,6 +71,8 @@ export async function deleteAccount(uid, { keepBan = false } = {}) {
     await photos().delete(pid)
   }
   await photos().delete(`avatar/${uid}`)
+
+  await unindexUser(uid)
 
   if (keepBan) {
     // Se queda un registro mínimo para que no pueda volver con el mismo @
